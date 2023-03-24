@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.toby.user.dao.UserDaoTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2023-03-24T13:02:12" hostname="eunjonghyeogs-MacBook-Air.local" time="0.628">
+  <properties/>
+  <testcase name="getUserFailure()" classname="org.toby.user.dao.UserDaoTest" time="0.42"/>
+  <testcase name="andAndGet()" classname="org.toby.user.dao.UserDaoTest" time="0.124"/>
+  <testcase name="count()" classname="org.toby.user.dao.UserDaoTest" time="0.082"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[3월 24, 2023 10:02:12 오후 org.springframework.test.context.support.AbstractTestContextBootstrapper getDefaultTestExecutionListenerClassNames
+정보: Loaded default TestExecutionListener class names from location [META-INF/spring.factories]: [org.springframework.test.context.web.ServletTestExecutionListener, org.springframework.test.context.support.DirtiesContextBeforeModesTestExecutionListener, org.springframework.test.context.support.DependencyInjectionTestExecutionListener, org.springframework.test.context.support.DirtiesContextTestExecutionListener, org.springframework.test.context.transaction.TransactionalTestExecutionListener, org.springframework.test.context.jdbc.SqlScriptsTestExecutionListener, org.springframework.test.context.event.EventPublishingTestExecutionListener]
+3월 24, 2023 10:02:12 오후 org.springframework.test.context.support.AbstractTestContextBootstrapper getTestExecutionListeners
+정보: Using TestExecutionListeners: [org.springframework.test.context.support.DirtiesContextBeforeModesTestExecutionListener@674bd420, org.springframework.test.context.support.DependencyInjectionTestExecutionListener@2b0f373b, org.springframework.test.context.support.DirtiesContextTestExecutionListener@2ceb80a1, org.springframework.test.context.transaction.TransactionalTestExecutionListener@4b45dcb8, org.springframework.test.context.jdbc.SqlScriptsTestExecutionListener@7216fb24, org.springframework.test.context.event.EventPublishingTestExecutionListener@2072acb2]
+Loading class `com.mysql.jdbc.Driver'. This is deprecated. The new driver class is `com.mysql.cj.jdbc.Driver'. The driver is automatically registered via the SPI and manual loading of the driver class is generally unnecessary.
+]]></system-err>
+</testsuite>
