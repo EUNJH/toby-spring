@@ -11,15 +11,17 @@ import java.sql.SQLException;
 
 
 public class UserDao {
-    private DataSource dataSource;
 
-    public void setDataSource(DataSource dataSource) {
+    private DataSource dataSource;
+    private JdbcContext jdbcContext;
+    UserDao(DataSource dataSource, JdbcContext jdbcContext) {
         this.dataSource = dataSource;
+        this.jdbcContext = jdbcContext;
     }
 
     public void add(final User user) throws SQLException {
 
-        jdbcContextWithStatementStrategy(new StatementStratgy() {
+        jdbcContext.workWithStatementStrategy(new StatementStratgy() {
             @Override
             public PreparedStatement makePreparedStatement(Connection c)
                     throws SQLException {
@@ -59,7 +61,7 @@ public class UserDao {
     }
 
     public void deleteAll() throws SQLException {
-        jdbcContextWithStatementStrategy(
+        this.jdbcContext.workWithStatementStrategy(
                 new StatementStratgy() {
                     @Override
                     public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
@@ -67,31 +69,6 @@ public class UserDao {
                     }
                 }
         );
-    }
-
-    public void jdbcContextWithStatementStrategy(StatementStratgy stmt) throws SQLException {
-        Connection c = null;
-        PreparedStatement ps =null;
-
-        try {
-            c= dataSource.getConnection();
-            ps = stmt.makePreparedStatement(c);
-
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw e;
-        } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {}
-            }
-            if (c != null) {
-                try {
-                    c.close();
-                } catch (SQLException e) {}
-            }
-        }
     }
 
     public int getCount() throws SQLException  {
