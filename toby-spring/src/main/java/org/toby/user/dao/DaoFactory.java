@@ -22,6 +22,6 @@ public class DaoFactory {
 
     @Bean
     public UserDao userDao(DataSource dataSource) {
-        return new UserDao(dataSource);
+        return new UserDaoJdbc(dataSource);
     }
 }
