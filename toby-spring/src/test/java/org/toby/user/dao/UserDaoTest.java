@@ -13,6 +13,7 @@ import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.toby.user.domain.Level;
 import org.toby.user.domain.User;
 
 import javax.sql.DataSource;
@@ -41,14 +42,14 @@ class UserDaoTest {
     public void setUp() {
         this.dao = this.context.getBean("userDao", UserDaoJdbc.class);
 
-        this.user1 = new User("1", "gyumee", "springno1");
-        this.user2 = new User("2", "leegw700", "springno2");
-        this.user3 = new User("3", "bumjin", "springno3");
+        this.user1 = new User("1", "gyumee", "springno1", Level.BASIC, 1, 0);
+        this.user2 = new User("2", "leegw700", "springno2", Level.SILVER, 55, 10);
+        this.user3 = new User("3", "bumjin", "springno3", Level.GOLD, 100, 40);
 
     }
 
     @Test
-    public void andAndGet() throws SQLException {
+    public void addAndGet() throws SQLException {
         dao.deleteAll();
         assertThat(dao.getCount()).isEqualTo(0);
 
@@ -144,9 +145,32 @@ class UserDaoTest {
 
     }
 
+    @Test
+    public void update() {
+        dao.deleteAll();
+
+        dao.add(user1);
+        dao.add(user2);
+
+        user1.setName("오민규");
+        user1.setPassword("spring6");
+        user1.setLevel(Level.GOLD);
+        user1.setLogin(1000);
+        user1.setRecommend(999);
+        dao.update(user1);
+
+        User user1update = dao.get(user1.getId());
+        checkSameUser(user1, user1update);
+        User user2update = dao.get(user2.getId());
+        checkSameUser(user2, user2update);
+    }
+
     private void checkSameUser(User user1, User user2) {
         assertThat(user1.getId()).isEqualTo(user2.getId());
         assertThat(user1.getName()).isEqualTo(user2.getName());
         assertThat(user1.getPassword()).isEqualTo(user2.getPassword());
+        assertThat(user1.getLevel()).isEqualTo(user2.getLevel());
+        assertThat(user1.getLogin()).isEqualTo(user2.getLogin());
+        assertThat(user1.getRecommend()).isEqualTo(user2.getRecommend());
     }
 }
