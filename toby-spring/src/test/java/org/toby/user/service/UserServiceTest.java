@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.toby.user.dao.DaoFactory;
 import org.toby.user.dao.UserDao;
 import org.toby.user.domain.Level;
@@ -28,6 +29,8 @@ public class UserServiceTest {
     UserDao userDao;
     @Autowired
     DataSource dataSource;
+    @Autowired
+    PlatformTransactionManager transactionManager;
     List<User> users;
 
     public static final int MIN_LOGCOUNT_FOR_SILVER = 50;
@@ -93,8 +96,9 @@ public class UserServiceTest {
 
 
     @Test
-    public void upgradeAllOrNothing() throws SQLException {
-        UserService testUserService = new TestUserService(userDao, users.get(3).getId(), this.dataSource);
+    public void upgradeAllOrNothing() {
+        UserService testUserService = new TestUserService(userDao, users.get(3).getId(), this.dataSource, transactionManager);
+
         userDao.deleteAll();
         for (User user : users) {
             userDao.add(user);
@@ -112,8 +116,8 @@ public class UserServiceTest {
     static class TestUserService extends UserService {
         private String id;
 
-        private TestUserService(UserDao userDao, String id, DataSource dataSource) {
-            super(userDao, dataSource);
+        private TestUserService(UserDao userDao, String id, DataSource dataSource, PlatformTransactionManager transactionManager) {
+            super(userDao, dataSource, transactionManager);
             this.id = id;
         }
 

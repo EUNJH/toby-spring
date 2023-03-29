@@ -1,6 +1,10 @@
 package org.toby.user.service;
 
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.toby.user.dao.DaoFactory;
 import org.toby.user.dao.UserDao;
@@ -15,19 +19,22 @@ import java.util.List;
 public class UserService {
     UserDao userDao;
     private DataSource dataSource;
+    private PlatformTransactionManager transactionManager;
 
     public static final int MIN_LOGCOUNT_FOR_SILVER = 50;
     public static final int MIN_RECOMMEND_FOR_GOLD = 30;
 
-    public UserService(UserDao userDao, DataSource dataSource) {
+    public UserService(UserDao userDao, DataSource dataSource, PlatformTransactionManager transactionManager) {
         this.userDao = userDao;
         this.dataSource = dataSource;
+        this.transactionManager = transactionManager;
     }
 
-    public void upgradeLevels() throws SQLException {
-        TransactionSynchronizationManager.initSynchronization();
-        Connection c = DataSourceUtils.getConnection(dataSource);
-        c.setAutoCommit(false);
+    public void upgradeLevels() {
+         transactionManager =
+                new DataSourceTransactionManager(dataSource);
+        TransactionStatus status =
+                transactionManager.getTransaction(new DefaultTransactionDefinition());
 
         try {
             List<User> users = userDao.getAll();
@@ -36,14 +43,10 @@ public class UserService {
                     upgradeLevel(user);
                 }
             }
-            c.commit();
-        } catch (Exception e) {
-            c.rollback();
+            transactionManager.commit(status);
+        } catch (RuntimeException e) {
+            transactionManager.rollback(status);
             throw e;
-        } finally {
-            DataSourceUtils.releaseConnection(c, dataSource);
-            TransactionSynchronizationManager.unbindResource(this.dataSource);
-            TransactionSynchronizationManager.clearSynchronization();
         }
 
     }

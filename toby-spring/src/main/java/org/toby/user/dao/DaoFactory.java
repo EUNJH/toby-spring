@@ -2,7 +2,9 @@ package org.toby.user.dao;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.toby.user.service.UserService;
 
 import javax.sql.DataSource;
@@ -27,7 +29,14 @@ public class DaoFactory {
     }
 
     @Bean
-    public UserService userService(UserDao userDao, DataSource dataSource) {
-        return new UserService(userDao, dataSource);
+    public UserService userService(UserDao userDao, DataSource dataSource, PlatformTransactionManager transactionManager) {
+        return new UserService(userDao, dataSource, transactionManager);
     }
+
+    @Bean
+    public PlatformTransactionManager transactionManager(DataSource dataSource) {
+        return new DataSourceTransactionManager(dataSource);
+    }
+
+
 }
