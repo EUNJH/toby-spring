@@ -3,6 +3,7 @@ package org.toby.user.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
@@ -21,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 import static org.toby.user.service.UserServiceImpl.MIN_LOGCOUNT_FOR_SILVER;
 import static org.toby.user.service.UserServiceImpl.MIN_RECCOMEND_FOR_GOLD;
 
@@ -87,70 +89,28 @@ public class UserServiceTest {
 
     @Test @DirtiesContext
     public void upgradeLevels() {
-        MockUserDao mockUserDao = new MockUserDao(this.users);
+        UserDao mockUserDao = mock(UserDao.class);
+        when(mockUserDao.getAll()).thenReturn(this.users);
 
-        MockMailSender mockMailSender = new MockMailSender();
+        MailSender mockMailSender = mock(MailSender.class);
+
         UserServiceImpl userServiceImplTest = new UserServiceImpl(mockUserDao, mockMailSender);
 
         userServiceImplTest.upgradeLevels();
 
-        List<User> updated = mockUserDao.getUpdated();
-        assertThat(updated.size()).isEqualTo(2);
-        checkUserAndLevel(updated.get(0), "joytouch", Level.SILVER);
-        checkUserAndLevel(updated.get(1), "madnite1", Level.GOLD);
+        verify(mockUserDao, times(2)).update(any(User.class));
+        verify(mockUserDao, times(2)).update(any(User.class));
+        verify(mockUserDao).update(users.get(1));
+        assertThat(users.get(1).getLevel()).isEqualTo(Level.SILVER);
+        verify(mockUserDao).update(users.get(3));
+        assertThat(users.get(3).getLevel()).isEqualTo(Level.GOLD);
 
-        List<String> request = mockMailSender.getRequests();
-        assertThat(request.size()).isEqualTo(2);
-        assertThat(request.get(0)).isEqualTo(users.get(1).getEmail());
-        assertThat(request.get(1)).isEqualTo(users.get(3).getEmail());
-    }
-
-    private void checkUserAndLevel(User updated, String expectedId, Level expectedLevel) {
-        assertThat(updated.getId()).isEqualTo(expectedId);
-        assertThat(updated.getLevel()).isEqualTo(expectedLevel);
-    }
-
-    static class MockUserDao implements UserDao {
-        private List<User> users;
-        private List<User> updated = new ArrayList<>();
-
-        private MockUserDao(List<User> users) {
-            this.users = users;
-        }
-
-        public List<User> getUpdated() {
-            return updated;
-        }
-
-        @Override
-        public void add(User user) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public User get(String id) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public List<User> getAll() {
-            return this.users;
-        }
-
-        @Override
-        public void deleteAll() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int getCount() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void update(User user) {
-            updated.add(user);
-        }
+        ArgumentCaptor<SimpleMailMessage> mailMessageArg =
+                ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mockMailSender, times(2)).send(mailMessageArg.capture());
+        List<SimpleMailMessage> mailMessages = mailMessageArg.getAllValues();
+        assertThat(mailMessages.get(0).getTo()[0]).isEqualTo(users.get(1).getEmail());
+        assertThat(mailMessages.get(1).getTo()[0]).isEqualTo(users.get(3).getEmail());
     }
 
     private void checkLevelUpgraded(User user, boolean upgraded) {
