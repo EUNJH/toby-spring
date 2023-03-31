@@ -1,7 +1,11 @@
 package org.toby.user.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.mail.MailSender;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -16,59 +20,66 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
+@Component
 public class UserService {
-    UserDao userDao;
-    private DataSource dataSource;
+    public static final int MIN_LOGCOUNT_FOR_SILVER = 50;
+    public static final int MIN_RECCOMEND_FOR_GOLD = 30;
+
+    private UserDao userDao;
+    private MailSender mailSender;
     private PlatformTransactionManager transactionManager;
 
-    public static final int MIN_LOGCOUNT_FOR_SILVER = 50;
-    public static final int MIN_RECOMMEND_FOR_GOLD = 30;
-
-    public UserService(UserDao userDao, DataSource dataSource, PlatformTransactionManager transactionManager) {
+    public UserService(UserDao userDao, MailSender mailSender, PlatformTransactionManager transactionManager) {
         this.userDao = userDao;
-        this.dataSource = dataSource;
+        this.mailSender = mailSender;
         this.transactionManager = transactionManager;
     }
 
     public void upgradeLevels() {
-         transactionManager =
-                new DataSourceTransactionManager(dataSource);
         TransactionStatus status =
-                transactionManager.getTransaction(new DefaultTransactionDefinition());
-
+                this.transactionManager.getTransaction(new DefaultTransactionDefinition());
         try {
             List<User> users = userDao.getAll();
             for (User user : users) {
-                if(canUpgradeLevel(user)) {
+                if (canUpgradeLevel(user)) {
                     upgradeLevel(user);
                 }
             }
-            transactionManager.commit(status);
+            this.transactionManager.commit(status);
         } catch (RuntimeException e) {
-            transactionManager.rollback(status);
+            this.transactionManager.rollback(status);
             throw e;
         }
-
     }
 
     private boolean canUpgradeLevel(User user) {
         Level currentLevel = user.getLevel();
-        switch (currentLevel) {
+        switch(currentLevel) {
             case BASIC: return (user.getLogin() >= MIN_LOGCOUNT_FOR_SILVER);
-            case SILVER: return (user.getRecommend() >= MIN_RECOMMEND_FOR_GOLD);
+            case SILVER: return (user.getRecommend() >= MIN_RECCOMEND_FOR_GOLD);
             case GOLD: return false;
-            default:throw new IllegalArgumentException("Unknown Level: " + currentLevel);
+            default: throw new IllegalArgumentException("Unknown Level: " + currentLevel);
         }
     }
 
     protected void upgradeLevel(User user) {
-        if (user.getLevel() == Level.BASIC) user.setLevel(Level.SILVER);
-        else if (user.getLevel() == Level.SILVER) user.setLevel(Level.GOLD);
+        user.upgradeLevel();
         userDao.update(user);
-        }
+        sendUpgradeEMail(user);
+    }
+
+    private void sendUpgradeEMail(User user) {
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(user.getEmail());
+        mailMessage.setFrom("useradmin@ksug.org");
+        mailMessage.setSubject("Upgrade 안내");
+        mailMessage.setText("사용자님의 등급이 " + user.getLevel().name());
+
+        this.mailSender.send(mailMessage);
+    }
 
     public void add(User user) {
-        user.upgradeLevel();
+        if (user.getLevel() == null) user.setLevel(Level.BASIC);
         userDao.add(user);
     }
 }

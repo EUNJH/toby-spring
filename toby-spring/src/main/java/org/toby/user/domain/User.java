@@ -1,34 +1,54 @@
 package org.toby.user.domain;
 
+
+
+import javax.mail.Session;
+import javax.mail.internet.MimeMessage;
+import java.util.Properties;
+
 public class User {
 
     String id;
     String name;
     String password;
+    String email;
     Level level;
     int login;
     int recommend;
 
-    public void upgradeLevel() {
-        Level nextLevel = this.level.nextLevel();
-        if (nextLevel == null) {
-            throw new IllegalStateException(this.level + "은 업그레이드가 불가능 합니다.");
-        }
-        else {
-            this.level = nextLevel;
-        }
-    }
-
     public User() {
     }
 
-    public User(String id, String name, String password, Level level, int login, int recommend) {
+    public User(String id, String name, String password, String email,
+                Level level, int login, int recommend) {
+        super();
         this.id = id;
         this.name = name;
         this.password = password;
+        this.email = email;
         this.level = level;
         this.login = login;
         this.recommend = recommend;
+    }
+
+
+    public String getId() {
+        return id;
+    }
+    public void setId(String id) {
+        this.id = id;
+    }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public String getPassword() {
+        return password;
+    }
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public Level getLevel() {
@@ -55,22 +75,21 @@ public class User {
         this.recommend = recommend;
     }
 
-    public String getId() {
-        return id;
+    public String getEmail() {
+        return email;
     }
-    public void setId(String id) {
-        this.id = id;
+
+    public void setEmail(String email) {
+        this.email = email;
     }
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
-    public String getPassword() {
-        return password;
-    }
-    public void setPassword(String password) {
-        this.password = password;
+
+    public void upgradeLevel() {
+        Level nextLevel = this.level.nextLevel();
+        if (nextLevel == null) {
+            throw new IllegalStateException(this.level + "은  업그레이드가 불가능합니다");
+        }
+        else {
+            this.level = nextLevel;
+        }
     }
 }

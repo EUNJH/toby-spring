@@ -31,8 +31,8 @@ class UserDaoTest {
     ApplicationContext context;
     @Autowired
     DataSource dataSource;
-
-    private UserDaoJdbc dao;
+    @Autowired
+    UserDaoJdbc dao;
 
     private User user1;
     private User user2;
@@ -40,11 +40,9 @@ class UserDaoTest {
 
     @BeforeEach
     public void setUp() {
-        this.dao = this.context.getBean("userDao", UserDaoJdbc.class);
-
-        this.user1 = new User("1", "gyumee", "springno1", Level.BASIC, 1, 0);
-        this.user2 = new User("2", "leegw700", "springno2", Level.SILVER, 55, 10);
-        this.user3 = new User("3", "bumjin", "springno3", Level.GOLD, 100, 40);
+        this.user1 = new User("1", "gyumee", "springno1",  "naver", Level.BASIC, 1, 0);
+        this.user2 = new User("2", "leegw700", "springno2", "google", Level.SILVER, 55, 10);
+        this.user3 = new User("3", "bumjin", "springno3", "daum", Level.GOLD, 100, 40);
 
     }
 
