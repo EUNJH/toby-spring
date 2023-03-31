@@ -7,11 +7,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.mail.MailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.toby.Main;
 import org.toby.user.service.DummyMailSender;
 import org.toby.user.service.UserService;
+import org.toby.user.service.UserServiceImpl;
+import org.toby.user.service.UserServiceTx;
 
 import javax.sql.DataSource;
 
@@ -43,6 +44,16 @@ public class DaoFactory {
     @Bean
     JdbcTemplate jdbcTemplate(DataSource dataSource) {
         return new JdbcTemplate(dataSource);
+    }
+
+    @Bean
+    UserService userService(UserService userServiceImpl, PlatformTransactionManager transactionManager) {
+        return new UserServiceTx(userServiceImpl, transactionManager);
+    }
+
+    @Bean
+    UserService userServiceImpl(UserDao userDao, MailSender mailSender) {
+        return new UserServiceImpl(userDao, mailSender);
     }
 
 }
