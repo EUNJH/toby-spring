@@ -5,19 +5,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.MailException;
+import org.springframework.context.ApplicationContext;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.toby.user.dao.DaoFactory;
 import org.toby.user.dao.UserDao;
 import org.toby.user.domain.Level;
 import org.toby.user.domain.User;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,19 +25,15 @@ import static org.toby.user.service.UserServiceImpl.MIN_LOGCOUNT_FOR_SILVER;
 import static org.toby.user.service.UserServiceImpl.MIN_RECCOMEND_FOR_GOLD;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = DaoFactory.class)
+@ContextConfiguration(locations = "/application-context.xml")
 public class UserServiceTest {
 
-    @Autowired
-    UserService userService;
-    @Autowired
-    UserService userServiceImpl;
-    @Autowired
-    UserDao userDao;
-    @Autowired
-    PlatformTransactionManager transactionManager;
-    @Autowired
-    MailSender mailSender;
+    @Autowired ApplicationContext context;
+    @Autowired UserService userService;
+    @Autowired UserService userServiceImpl;
+    @Autowired UserDao userDao;
+    @Autowired PlatformTransactionManager transactionManager;
+    @Autowired MailSender mailSender;
     List<User> users;
 
     @BeforeEach
@@ -60,7 +54,9 @@ public class UserServiceTest {
         User userWithLevel = users.get(4);
         User userWithoutLevel = users.get(0);
         userWithoutLevel.setLevel(null);
-
+        if (userService == null) {
+            System.out.println("null");
+        }
         userService.add(userWithLevel);
         userService.add(userWithoutLevel);
 
@@ -70,22 +66,6 @@ public class UserServiceTest {
         assertThat(userWithLevelRead.getLevel()).isEqualTo(userWithLevel.getLevel());
         assertThat(userWithoutLevelRead.getLevel()).isEqualTo(Level.BASIC);
     }
-
-    static class MockMailSender implements MailSender {
-        private List<String> requests = new ArrayList<String>();
-
-        public List<String> getRequests() {
-            return requests;
-        }
-
-        public void send(SimpleMailMessage mailMessage) throws MailException {
-            requests.add(mailMessage.getTo()[0]);
-        }
-
-        public void send(SimpleMailMessage[] mailMessage) throws MailException {
-        }
-    }
-
 
     @Test @DirtiesContext
     public void upgradeLevels() {
@@ -124,18 +104,22 @@ public class UserServiceTest {
     }
 
 
-    @Test
-    public void upgradeAllOrNothing() {
+    @Test @DirtiesContext
+    public void upgradeAllOrNothing() throws Exception {
         UserServiceImpl testUserServiceImpl = new TestUserServiceImpl(
                 userDao, mailSender, users.get(3).getId());
 
-        UserServiceTx userServiceTx = new UserServiceTx(testUserServiceImpl, transactionManager);
+        TxProxyFactoryBean txProxyFactoryBean =
+                context.getBean("&userService", TxProxyFactoryBean.class);
+        txProxyFactoryBean.setTarget(testUserServiceImpl);
+        UserService txUserService = (UserService) txProxyFactoryBean.getObject();
+
         userDao.deleteAll();
         for (User user : users) {
             userDao.add(user);
         }
         try {
-            userServiceTx.upgradeLevels();
+            txUserService.upgradeLevels();
             fail("TestUserServiceException expected");
         }
         catch (TestUserServiceException e) {

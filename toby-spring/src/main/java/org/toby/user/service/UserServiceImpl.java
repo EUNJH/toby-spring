@@ -62,4 +62,12 @@ public class UserServiceImpl implements UserService{
         if (user.getLevel() == null) user.setLevel(Level.BASIC);
         userDao.add(user);
     }
+
+    public void setUserDao(UserDao userDao) {
+        this.userDao = userDao;
+    }
+
+    public void setMailSender(MailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 }

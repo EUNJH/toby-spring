@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = DaoFactory.class)
+@ContextConfiguration(locations = "/application-context.xml")
 class UserDaoTest {
     @Autowired
     ApplicationContext context;

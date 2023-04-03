@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.toby.user.domain.Level;
 import org.toby.user.domain.User;
 
+import javax.sql.DataSource;
 import java.util.List;
 
 @Component
@@ -14,8 +15,8 @@ public class UserDaoJdbc implements UserDao {
 
     private JdbcTemplate jdbcTemplate;
 
-    public UserDaoJdbc(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public void setDataSource(DataSource dataSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
     private RowMapper<User> userMapper =
