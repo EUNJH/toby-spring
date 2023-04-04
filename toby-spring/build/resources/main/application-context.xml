@@ -10,10 +10,6 @@
        http://www.springframework.org/schema/tx
        http://www.springframework.org/schema/tx/spring-tx.xsd">
 
-    <aop:config>
-        <aop:advisor advice-ref="transactionAdvice" pointcut="bean(*Service)" />
-    </aop:config>
-
     <bean id="dataSource" class="org.springframework.jdbc.datasource.SimpleDriverDataSource">
         <property name="driverClass" value="com.mysql.cj.jdbc.Driver" />
         <property name="url" value="jdbc:mysql://localhost/tobi?characterEncoding=UTF-8" />
@@ -21,13 +17,22 @@
         <property name="password" value="1234" />
     </bean>
 
+    <tx:annotation-driven />
+
+    <!--
+    <aop:config>
+        <aop:advisor advice-ref="transactionAdvice" pointcut="bean(*Service)" />
+    </aop:config>
+
+
+
     <tx:advice id="transactionAdvice">
         <tx:attributes>
             <tx:method name="get*" read-only="true" />
             <tx:method name="*" />
         </tx:attributes>
     </tx:advice>
-<!--
+
     <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator" />
 
     <bean id="transactionPointcut" class="org.springframework.aop.aspectj.AspectJExpressionPointcut" >

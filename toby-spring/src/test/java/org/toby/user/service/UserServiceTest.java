@@ -14,6 +14,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.toby.user.dao.UserDao;
 import org.toby.user.domain.Level;
 import org.toby.user.domain.User;
@@ -52,8 +55,7 @@ public class UserServiceTest {
 
     @Test
     public void add() {
-        userDao.deleteAll();
-
+        userService.deleteAll();
         User userWithLevel = users.get(4);
         User userWithoutLevel = users.get(0);
         userWithoutLevel.setLevel(null);
@@ -128,7 +130,14 @@ public class UserServiceTest {
     public void readOnlyTransactionAttribute() {
         assertThatThrownBy(() -> testUserService.getAll())
                 .isInstanceOf(TransientDataAccessResourceException.class);
+    }
 
+    @Test
+    @Transactional
+    public void transactionSync() {
+        userService.add(users.get(0));
+        userService.add(users.get(1));
+        assertThat(userDao.getCount()).isEqualTo(2);
     }
 
     static class TestUserServiceImpl extends UserServiceImpl {
