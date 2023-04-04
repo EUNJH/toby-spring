@@ -4,8 +4,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.test.annotation.DirtiesContext;
@@ -21,6 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.util.Assert.isTrue;
 import static org.toby.user.service.UserServiceImpl.MIN_LOGCOUNT_FOR_SILVER;
 import static org.toby.user.service.UserServiceImpl.MIN_RECCOMEND_FOR_GOLD;
 
@@ -30,7 +33,7 @@ public class UserServiceTest {
 
     @Autowired ApplicationContext context;
     @Autowired UserService userService;
-    @Autowired UserService userServiceImpl;
+    @Autowired UserService testUserService;
     @Autowired UserDao userDao;
     @Autowired PlatformTransactionManager transactionManager;
     @Autowired MailSender mailSender;
@@ -104,22 +107,15 @@ public class UserServiceTest {
     }
 
 
-    @Test @DirtiesContext
+    @Test
     public void upgradeAllOrNothing() throws Exception {
-        UserServiceImpl testUserServiceImpl = new TestUserServiceImpl(
-                userDao, mailSender, users.get(3).getId());
-
-        TxProxyFactoryBean txProxyFactoryBean =
-                context.getBean("&userService", TxProxyFactoryBean.class);
-        txProxyFactoryBean.setTarget(testUserServiceImpl);
-        UserService txUserService = (UserService) txProxyFactoryBean.getObject();
 
         userDao.deleteAll();
         for (User user : users) {
             userDao.add(user);
         }
         try {
-            txUserService.upgradeLevels();
+            this.testUserService.upgradeLevels();
             fail("TestUserServiceException expected");
         }
         catch (TestUserServiceException e) {
@@ -128,17 +124,30 @@ public class UserServiceTest {
         checkLevelUpgraded(users.get(1), false);
     }
 
-    static class TestUserServiceImpl extends UserServiceImpl {
-        private String id;
+    @Test
+    public void readOnlyTransactionAttribute() {
+        assertThatThrownBy(() -> testUserService.getAll())
+                .isInstanceOf(TransientDataAccessResourceException.class);
 
-        public TestUserServiceImpl(UserDao userDao, MailSender mailSender, String id) {
+    }
+
+    static class TestUserServiceImpl extends UserServiceImpl {
+        private String id = "madnite1";
+
+        public TestUserServiceImpl(UserDao userDao, MailSender mailSender) {
             super(userDao, mailSender);
-            this.id = id;
         }
 
         protected void upgradeLevel(User user) {
             if (user.getId().equals(this.id)) throw new TestUserServiceException();
             super.upgradeLevel(user);
+        }
+
+        public List<User> getAll() {
+            for(User user : super.getAll()) {
+                super.update(user);
+            }
+            return null;
         }
     }
 

@@ -18,6 +18,10 @@ dependencies {
     implementation 'javax.mail:mail:1.4.7'
     implementation 'org.springframework:spring-context-support:5.2.23.RELEASE'
     implementation 'javax.activation:activation:1.1.1'
+    implementation 'org.springframework:spring-aop:5.2.23.RELEASE'
+    implementation 'aopalliance:aopalliance:1.0'
+    implementation 'org.aspectj:aspectjtools:1.9.19'
+
 
     testImplementation 'org.mockito:mockito-core:5.2.0'
     testImplementation 'org.assertj:assertj-core:3.24.2'
